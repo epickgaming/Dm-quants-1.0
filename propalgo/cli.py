@@ -23,9 +23,17 @@ import numpy as np
 import pandas as pd
 
 from .backtest import run_walk_forward
-from .config import StrategyConfig
+from .config import StrategyConfig, load_overrides
 from .data import generate_synthetic_basket, get_data, save_cache, SyntheticSpec
 from .signals import generate_signals, write_signals
+
+
+def _make_cfg(args) -> StrategyConfig:
+    cfg = StrategyConfig()
+    if getattr(args, "config", None):
+        load_overrides(cfg, args.config)
+        print(f"[config] applied overrides from {args.config}")
+    return cfg
 
 
 def _load_basket(args, cfg: StrategyConfig) -> Dict[str, pd.DataFrame]:
@@ -73,7 +81,7 @@ def _per_instrument_report(result, cfg):
 
 
 def cmd_backtest(args):
-    cfg = StrategyConfig()
+    cfg = _make_cfg(args)
     data = _load_basket(args, cfg)
     result = run_walk_forward(data, cfg, verbose=True)
 
@@ -177,7 +185,7 @@ def _write_report(path, result, base_m, six_m, vstats, cfg):
 
 
 def cmd_signals(args):
-    cfg = StrategyConfig()
+    cfg = _make_cfg(args)
     data = _load_basket(args, cfg)
     df = generate_signals(data, cfg, scan_bars=args.scan_bars)
     path = args.out or os.path.join(args.out_dir, "signals.csv")
@@ -193,7 +201,7 @@ def cmd_signals(args):
 
 
 def cmd_fetch(args):
-    cfg = StrategyConfig()
+    cfg = _make_cfg(args)
     for inst in cfg.instruments:
         try:
             df = get_data(inst, data_dir=args.data_dir, start=args.start,
@@ -218,6 +226,9 @@ def build_parser():
     common.add_argument("--start", default="2018-01-01")
     common.add_argument("--no-fetch", action="store_true",
                         help="use only cached data, do not hit the network")
+    common.add_argument("--config", default=None,
+                        help="YAML/JSON file overriding per-instrument costs and "
+                             "the broker symbol map (strategy params stay locked)")
 
     bt = sub.add_parser("backtest", parents=[common], help="walk-forward backtest")
     bt.set_defaults(func=cmd_backtest)

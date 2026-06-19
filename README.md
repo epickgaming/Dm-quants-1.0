@@ -175,6 +175,20 @@ To re-measure for your broker, for each instrument:
 On H1 the edge survives ~+1bp of extra slippage but dies near +2bp, so accurate
 costs matter more than anything else here.
 
+### Override costs & symbols without editing source
+
+Both the per-instrument costs and the broker symbol map are configurable via an
+external YAML/JSON file (locked strategy params are never read from it):
+
+```bash
+cp config.example.yaml my_broker.yaml   # edit costs + symbol_map for your broker
+python -m propalgo.cli backtest --no-fetch --config my_broker.yaml
+python -m propalgo.cli signals  --no-fetch --config my_broker.yaml
+```
+
+The EA mirrors the same knobs as inputs (`InpMap*`, `InpRiskPct`, limits), so the
+broker mapping lives in both layers.
+
 ---
 
 ## Tests

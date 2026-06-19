@@ -1,0 +1,26 @@
+# Example PropAlgo user config.
+#
+# Only per-instrument round-trip COSTS (fraction of price) and the broker
+# SYMBOL_MAP are user-tunable here. The locked strategy parameters cannot be
+# changed from a config file.
+#
+# Usage:
+#   python -m propalgo.cli backtest --no-fetch --config config.example.yaml
+#   python -m propalgo.cli signals  --no-fetch --config config.example.yaml
+
+# Round-trip cost as a fraction of price. RE-MEASURE these for your broker:
+#   round_trip_cost ~= (spread + 2 * commission_in_price) / price
+costs:
+  XAUUSD: 0.0003
+  FTSE100: 0.0003
+  SP500: 0.0002
+  COPPER: 0.0007
+  DAX: 0.0003
+
+# Internal instrument key -> your broker's exact CFD ticker.
+symbol_map:
+  XAUUSD: XAUUSD
+  FTSE100: UK100
+  SP500: US500
+  COPPER: COPPER
+  DAX: GER40

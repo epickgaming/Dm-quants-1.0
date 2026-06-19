@@ -169,3 +169,55 @@ class StrategyConfig:
     contract_value: Dict[str, float] = field(
         default_factory=lambda: dict(CONTRACT_VALUE_PER_PRICE_UNIT)
     )
+
+
+def load_overrides(cfg: "StrategyConfig", path: str) -> "StrategyConfig":
+    """Apply user overrides from a YAML/JSON file onto a StrategyConfig.
+
+    Only the USER-tunable knobs are honoured -- the broker symbol map and the
+    per-instrument round-trip costs -- so the locked strategy parameters can
+    never be changed from a config file. Example file::
+
+        costs:
+          XAUUSD: 0.00035
+          COPPER: 0.0008
+        symbol_map:
+          FTSE100: FTSE100
+          DAX: DE40
+
+    Unknown keys are ignored with a warning.
+    """
+    import json
+    import os
+
+    if not path or not os.path.exists(path):
+        raise FileNotFoundError(f"config file not found: {path}")
+
+    with open(path) as f:
+        text = f.read()
+    data = None
+    try:
+        import yaml  # optional dependency
+        data = yaml.safe_load(text)
+    except Exception:
+        data = json.loads(text)  # fall back to JSON
+
+    data = data or {}
+    allowed = {"costs", "symbol_map"}
+    for key in data:
+        if key not in allowed:
+            print(f"[config] ignoring non-tunable key: {key!r}")
+
+    if isinstance(data.get("costs"), dict):
+        for inst, val in data["costs"].items():
+            if inst in cfg.instruments:
+                cfg.costs[inst] = float(val)
+            else:
+                print(f"[config] ignoring cost for unknown instrument: {inst!r}")
+    if isinstance(data.get("symbol_map"), dict):
+        for inst, sym in data["symbol_map"].items():
+            if inst in cfg.instruments:
+                cfg.symbol_map[inst] = str(sym)
+            else:
+                print(f"[config] ignoring symbol map for unknown instrument: {inst!r}")
+    return cfg
