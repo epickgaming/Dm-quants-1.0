@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install core dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Core + discovery + tests. vectorbt/dukascopy are optional and the
+          # code degrades gracefully, so they are not required for CI.
+          pip install numpy pandas scipy pyarrow stumpy pytest
+      - name: Run tests (offline, synthetic)
+        run: pytest -q
+      - name: Smoke-test the offline pipeline
+        run: |
+          python -m propalgo.cli signals --synthetic --months 22 --scan-bars 40

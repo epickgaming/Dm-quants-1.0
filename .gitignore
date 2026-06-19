@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# Data cache & outputs (regenerated; do not commit large parquet/csv)
+data/*.parquet
+signals_out/*.csv
+signals_out/*.md
+
+# OS
+.DS_Store
